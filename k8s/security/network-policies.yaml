@@ -1,0 +1,57 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: sql-server-policy
+  namespace: smart-stock-analyzer
+spec:
+  podSelector:
+    matchLabels:
+      app: sql-server
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app: portfolio-service
+      ports:
+        - protocol: TCP
+          port: 1433
+    - from:
+        - podSelector:
+            matchLabels:
+              app: analysis-service
+      ports:
+        - protocol: TCP
+          port: 1433
+
+---
+
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: redis-policy
+  namespace: smart-stock-analyzer
+spec:
+  podSelector:
+    matchLabels:
+      app: redis
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app: portfolio-service
+      ports:
+        - protocol: TCP
+          port: 6379
+    - from:
+        - podSelector:
+            matchLabels:
+              app: analysis-service
+      ports:
+        - protocol: TCP
+          port: 6379

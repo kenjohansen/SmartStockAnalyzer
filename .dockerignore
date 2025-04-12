@@ -1,0 +1,54 @@
+# .NET Core
+docker/**/bin/
+docker/**/obj/
+
+# Source control
+.git/
+.gitignore
+
+# IDE
+.vs/
+.vscode/
+.idea/
+
+# Build
+*.user
+*.userosscache
+*.suo
+*.userprefs
+
+# Logs
+logs/
+*.log
+
+# Environment variables
+.env
+*.env
+*.env.local
+*.env.*.local
+
+# NuGet packages
+*.nupkg
+*.snupkg
+**/[Pp]ackages/*
+!**/[Pp]ackages/build/
+!**/[Pp]ackages/repositories.config
+
+# Project files
+*.user
+*.userosscache
+*.sln.docstates
+
+# Windows image file caches
+Thumbs.db
+ehthumbs.db
+
+# Windows Installer files
+*.cab
+*.msi
+*.msix
+*.msixbundle
+*.msu
+
+# Windows shortcuts
+*.lnk
