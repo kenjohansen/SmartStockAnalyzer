@@ -1,0 +1,137 @@
+/*
+ * Copyright (c) 2025 Ken Johansen. All rights reserved.
+ * This file is part of Smart Portfolio Analyzer and is licensed under the MIT license.
+ * See the LICENSE file in the project root for more information.
+ */
+
+@page "/settings"
+@using SmartPortfolioAnalyzer.Core.Models
+@inject IPortfolioService PortfolioService
+@inject IAnalysisService AnalysisService
+
+<PageTitle>Settings</PageTitle>
+
+<div class="container-fluid">
+    <div class="row mt-4">
+        <div class="col-12">
+            <h1 class="display-4">Settings</h1>
+            <p class="lead">Configure your portfolio analysis preferences</p>
+        </div>
+    </div>
+
+    <div class="row mt-4">
+        <!-- Risk Preferences -->
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Risk Preferences</h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <label class="form-label">Risk Profile</label>
+                        <select class="form-select" @bind="RiskProfile">
+                            <option value="Conservative">Conservative</option>
+                            <option value="Moderate">Moderate</option>
+                            <option value="Aggressive">Aggressive</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Maximum Risk Level</label>
+                        <input type="range" class="form-range" min="0" max="100" step="1" @bind="MaxRiskLevel" />
+                        <div class="d-flex justify-content-between">
+                            <span>Low</span>
+                            <span>High</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Analysis Preferences -->
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Analysis Preferences</h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <label class="form-label">Analysis Frequency</label>
+                        <select class="form-select" @bind="AnalysisFrequency">
+                            <option value="Daily">Daily</option>
+                            <option value="Weekly">Weekly</option>
+                            <option value="Monthly">Monthly</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Prediction Horizon</label>
+                        <select class="form-select" @bind="PredictionHorizon">
+                            <option value="Short">Short Term (3 months)</option>
+                            <option value="Medium">Medium Term (6 months)</option>
+                            <option value="Long">Long Term (12 months)</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Portfolio Preferences -->
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Portfolio Preferences</h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <label class="form-label">Rebalancing Frequency</label>
+                        <select class="form-select" @bind="RebalancingFrequency">
+                            <option value="Monthly">Monthly</option>
+                            <option value="Quarterly">Quarterly</option>
+                            <option value="Yearly">Yearly</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Tax Considerations</label>
+                        <select class="form-select" @bind="TaxConsiderations">
+                            <option value="None">None</option>
+                            <option value="Basic">Basic</option>
+                            <option value="Advanced">Advanced</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Save Settings Button -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <button class="btn btn-primary" @onclick="SaveSettings">
+                Save Settings
+            </button>
+        </div>
+    </div>
+</div>
+
+@code {
+    private string RiskProfile = "Moderate";
+    private int MaxRiskLevel = 50;
+    private string AnalysisFrequency = "Weekly";
+    private string PredictionHorizon = "Medium";
+    private string RebalancingFrequency = "Quarterly";
+    private string TaxConsiderations = "Basic";
+
+    private async Task SaveSettings()
+    {
+        var settings = new PortfolioSettings
+        {
+            RiskProfile = RiskProfile,
+            MaxRiskLevel = MaxRiskLevel,
+            AnalysisFrequency = AnalysisFrequency,
+            PredictionHorizon = PredictionHorizon,
+            RebalancingFrequency = RebalancingFrequency,
+            TaxConsiderations = TaxConsiderations
+        };
+
+        await PortfolioService.SaveSettingsAsync(settings);
+    }
+}

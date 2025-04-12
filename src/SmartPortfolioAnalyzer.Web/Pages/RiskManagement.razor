@@ -1,0 +1,226 @@
+/*
+ * Copyright (c) 2025 Ken Johansen. All rights reserved.
+ * This file is part of Smart Portfolio Analyzer and is licensed under the MIT license.
+ * See the LICENSE file in the project root for more information.
+ */
+
+@page "/risk-management"
+@using SmartPortfolioAnalyzer.Core.Models
+@using SmartPortfolioAnalyzer.Services.Analysis.Models
+@inject IPortfolioService PortfolioService
+@inject IAnalysisService AnalysisService
+
+<PageTitle>Risk Management</PageTitle>
+
+<div class="container-fluid">
+    <div class="row mt-4">
+        <div class="col-12">
+            <h1 class="display-4">Risk Management</h1>
+            <p class="lead">Monitor and manage portfolio risks</p>
+        </div>
+    </div>
+
+    <!-- Risk Metrics -->
+    <div class="row mt-4">
+        <div class="col-md-3">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Current Risk Level</h5>
+                    <div class="d-flex justify-content-center">
+                        <div class="progress" style="height: 30px; width: 80%;">
+                            <div class="progress-bar" role="progressbar" style="width: @(CurrentRiskLevel * 100)%" 
+                                 aria-valuenow="@(CurrentRiskLevel * 100)" aria-valuemin="0" aria-valuemax="100">
+                                @(CurrentRiskLevel * 100:F1)%
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Value at Risk</h5>
+                    <h2 class="display-4 mb-0">$@ValueAtRisk:F2</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Beta</h5>
+                    <h2 class="display-4 mb-0">@Beta:F2</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Correlation</h5>
+                    <h2 class="display-4 mb-0">@Correlation:F2</h2>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Risk Distribution -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Risk Distribution</h5>
+                </div>
+                <div class="card-body">
+                    <div class="chart-container">
+                        <canvas id="riskDistributionChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Risk Breakdown -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Risk Breakdown</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Asset</th>
+                                    <th>Weight</th>
+                                    <th>Individual Risk</th>
+                                    <th>Contribution to Portfolio Risk</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var asset in RiskBreakdown)
+                                {
+                                    <tr>
+                                        <td>@asset.Asset</td>
+                                        <td>@(asset.Weight * 100:F1)%</td>
+                                        <td>@(asset.IndividualRisk * 100:F1)%</td>
+                                        <td>@(asset.ContributionToPortfolioRisk * 100:F1)%</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Risk Mitigation Actions -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Risk Mitigation Actions</h5>
+                </div>
+                <div class="card-body">
+                    <div class="list-group">
+                        @foreach (var action in RiskMitigationActions)
+                        {
+                            <div class="list-group-item">
+                                <div class="d-flex w-100 justify-content-between">
+                                    <h6 class="mb-1">@action.Description</h6>
+                                    <span class="badge bg-@GetPriorityBadgeClass(action.Priority)">@action.Priority</span>
+                                </div>
+                                <p class="mb-1">@action.Recommendation</p>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    private Portfolio? Portfolio;
+    private double CurrentRiskLevel = 0;
+    private double ValueAtRisk = 0;
+    private double Beta = 0;
+    private double Correlation = 0;
+    private List<RiskBreakdownItem> RiskBreakdown = new();
+    private List<RiskMitigationAction> RiskMitigationActions = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        Portfolio = await PortfolioService.GetPortfolioAsync();
+        await LoadRiskData();
+    }
+
+    private async Task LoadRiskData()
+    {
+        if (Portfolio != null)
+        {
+            var riskAnalysis = await AnalysisService.GetRiskAnalysisAsync(Portfolio);
+            CurrentRiskLevel = riskAnalysis.CurrentRiskLevel;
+            ValueAtRisk = riskAnalysis.ValueAtRisk;
+            Beta = riskAnalysis.Beta;
+            Correlation = riskAnalysis.Correlation;
+            RiskBreakdown = riskAnalysis.RiskBreakdown;
+            RiskMitigationActions = riskAnalysis.RiskMitigationActions;
+            InitializeRiskDistributionChart(riskAnalysis.RiskDistribution);
+        }
+    }
+
+    private void InitializeRiskDistributionChart(double[] distribution)
+    {
+        var ctx = document.getElementById("riskDistributionChart").getContext("2d");
+        new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: GenerateDistributionLabels(distribution.Length),
+                datasets: [{
+                    label: 'Risk Distribution',
+                    data: distribution,
+                    backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                    borderColor: 'rgba(54, 162, 235, 1)',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    title: {
+                        display: true,
+                        text: 'Risk Distribution Across Portfolio'
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+    }
+
+    private string[] GenerateDistributionLabels(int count)
+    {
+        var labels = new List<string>();
+        for (int i = 0; i < count; i++)
+        {
+            labels.Add($"Asset {i + 1}");
+        }
+        return labels.ToArray();
+    }
+
+    private string GetPriorityBadgeClass(int priority)
+    {
+        return priority switch
+        {
+            1 => "danger",
+            2 => "warning",
+            3 => "info",
+            _ => "secondary"
+        };
+    }
+}

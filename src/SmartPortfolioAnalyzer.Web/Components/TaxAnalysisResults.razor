@@ -1,0 +1,184 @@
+/*
+ * Copyright (c) 2025 Ken Johansen. All rights reserved.
+ * This file is part of Smart Portfolio Analyzer and is licensed under the MIT license.
+ * See the LICENSE file in the project root for more information.
+ */
+
+@using SmartPortfolioAnalyzer.Core.Models
+@using SmartPortfolioAnalyzer.Services.Analysis.Models
+
+<div class="container-fluid">
+    @if (Result != null)
+    {
+        <div class="row">
+            <!-- Tax Efficiency Card -->
+            <div class="col-md-4">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">Tax Efficiency</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div class="text-center">
+                                <h2 class="display-4 mb-0">@(Result.TaxEfficiency.TaxEfficiencyScore * 100:F1)%</h2>
+                                <p class="text-muted">Tax Efficiency Score</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tax Breakdown Section -->
+            <div class="col-md-8">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">Tax Breakdown</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <!-- Tax Breakdown List -->
+                            <div class="col-md-6">
+                                <div class="list-group">
+                                    <div class="list-group-item">
+                                        <div class="d-flex w-100 justify-content-between">
+                                            <h6 class="mb-1">Short-Term Gains</h6>
+                                            <span>$@Result.TaxEfficiency.ShortTermGains:F2</span>
+                                        </div>
+                                    </div>
+                                    <div class="list-group-item">
+                                        <div class="d-flex w-100 justify-content-between">
+                                            <h6 class="mb-1">Long-Term Gains</h6>
+                                            <span>$@Result.TaxEfficiency.LongTermGains:F2</span>
+                                        </div>
+                                    </div>
+                                    <div class="list-group-item">
+                                        <div class="d-flex w-100 justify-content-between">
+                                            <h6 class="mb-1">Dividend Income</h6>
+                                            <span>$@Result.TaxEfficiency.DividendIncome:F2</span>
+                                        </div>
+                                    </div>
+                                    <div class="list-group-item">
+                                        <div class="d-flex w-100 justify-content-between">
+                                            <h6 class="mb-1">Interest Income</h6>
+                                            <span>$@Result.TaxEfficiency.InterestIncome:F2</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- Tax Breakdown Chart -->
+                            <div class="col-md-6">
+                                <div class="chart-container">
+                                    <canvas id="taxBreakdownChart"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Optimization Plan Section -->
+            <div class="col-12 mt-4">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">Tax Optimization Plan</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table">
+                                <thead>
+                                    <tr>
+                                        <th>Asset Class</th>
+                                        <th>Current Weight</th>
+                                        <th>Target Weight</th>
+                                        <th>Change</th>
+                                        <th>Tax Impact</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var action in Result.OptimizationPlan.Actions)
+                                    {
+                                        <tr>
+                                            <td>@action.AssetClass</td>
+                                            <td>@(action.CurrentWeight * 100:F1)%</td>
+                                            <td>@(action.TargetWeight * 100:F1)%</td>
+                                            <td class="@(action.WeightDifference > 0 ? "text-success" : "text-danger")">
+                                                @(action.WeightDifference * 100:F1)%
+                                            </td>
+                                            <td>@(action.TaxImpact:F2)</td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    /// <summary>
+    /// Component for displaying tax analysis results.
+    /// </summary>
+    [Parameter]
+    public TaxOptimizationResult? Result { get; set; }
+
+    /// <summary>
+    /// Initializes the tax breakdown chart after the first render.
+    /// </summary>
+    protected override void OnAfterRender(bool firstRender)
+    {
+        if (firstRender && Result != null)
+        {
+            InitializeTaxBreakdownChart();
+        }
+    }
+
+    /// <summary>
+    /// Initializes the tax breakdown chart with income distribution data.
+    /// </summary>
+    private void InitializeTaxBreakdownChart()
+    {
+        var ctx = document.getElementById("taxBreakdownChart").getContext("2d");
+        new Chart(ctx, {
+            type: 'pie',
+            data: {
+                labels: ["Short-Term Gains", "Long-Term Gains", "Dividend Income", "Interest Income"],
+                datasets: [{
+                    data: [
+                        Result.TaxEfficiency.ShortTermGains,
+                        Result.TaxEfficiency.LongTermGains,
+                        Result.TaxEfficiency.DividendIncome,
+                        Result.TaxEfficiency.InterestIncome
+                    ],
+                    backgroundColor: [
+                        'rgba(255, 99, 132, 0.2)',
+                        'rgba(54, 162, 235, 0.2)',
+                        'rgba(75, 192, 192, 0.2)',
+                        'rgba(153, 102, 255, 0.2)'
+                    ],
+                    borderColor: [
+                        'rgba(255, 99, 132, 1)',
+                        'rgba(54, 162, 235, 1)',
+                        'rgba(75, 192, 192, 1)',
+                        'rgba(153, 102, 255, 1)'
+                    ],
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        position: 'top',
+                    },
+                    title: {
+                        display: true,
+                        text: 'Tax Income Breakdown'
+                    }
+                }
+            }
+        });
+    }
+}

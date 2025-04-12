@@ -1,0 +1,195 @@
+/*
+ * Copyright (c) 2025 Ken Johansen. All rights reserved.
+ * This file is part of Smart Portfolio Analyzer and is licensed under the MIT license.
+ * See the LICENSE file in the project root for more information.
+ */
+
+@using SmartPortfolioAnalyzer.Core.Models
+@using SmartPortfolioAnalyzer.Services.Analysis.Models
+
+<div class="container-fluid">
+    @if (Result != null)
+    {
+        <div class="row">
+            <!-- Risk Metrics Card -->
+            <div class="col-md-4">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">Risk Metrics</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="list-group">
+                            <!-- Current Risk Level -->
+                            <div class="list-group-item">
+                                <div class="d-flex w-100 justify-content-between">
+                                    <h6 class="mb-1">Current Risk Level</h6>
+                                    <span class="badge bg-@GetRiskLevelBadgeClass()">@Result.RiskMetrics.CurrentRiskLevel</span>
+                                </div>
+                            </div>
+                            <!-- Target Risk Level -->
+                            <div class="list-group-item">
+                                <div class="d-flex w-100 justify-content-between">
+                                    <h6 class="mb-1">Target Risk Level</h6>
+                                    <span class="badge bg-@GetTargetRiskLevelBadgeClass()">@Result.RiskMetrics.TargetRiskLevel</span>
+                                </div>
+                            </div>
+                            <!-- Risk Score -->
+                            <div class="list-group-item">
+                                <div class="d-flex w-100 justify-content-between">
+                                    <h6 class="mb-1">Risk Score</h6>
+                                    <span>@(Result.RiskMetrics.RiskScore * 100:F1)%</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Risk Distribution Chart -->
+            <div class="col-md-4">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">Risk Distribution</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="chart-container">
+                            <canvas id="riskDistributionChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Risk Recommendations -->
+            <div class="col-md-4">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">Risk Recommendations</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="list-group">
+                            @foreach (var recommendation in Result.Recommendations)
+                            {
+                                <div class="list-group-item">
+                                    <div class="d-flex w-100 justify-content-between">
+                                        <h6 class="mb-1">@recommendation.Description</h6>
+                                        <span class="badge bg-@GetPriorityBadgeClass(recommendation.Priority)">@recommendation.Priority</span>
+                                    </div>
+                                    <p class="mb-1">@recommendation.Recommendation</p>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    /// <summary>
+    /// Component for displaying risk analysis results.
+    /// </summary>
+    [Parameter]
+    public RiskOptimizationResult? Result { get; set; }
+
+    /// <summary>
+    /// Gets the badge class for the current risk level.
+    /// </summary>
+    /// <returns>The CSS class for the risk level badge.</returns>
+    private string GetRiskLevelBadgeClass()
+    {
+        return Result?.RiskMetrics.CurrentRiskLevel switch
+        {
+            RiskLevel.Low => "success",
+            RiskLevel.Medium => "warning",
+            RiskLevel.High => "danger",
+            _ => "secondary"
+        };
+    }
+
+    /// <summary>
+    /// Gets the badge class for the target risk level.
+    /// </summary>
+    /// <returns>The CSS class for the target risk level badge.</returns>
+    private string GetTargetRiskLevelBadgeClass()
+    {
+        return Result?.RiskMetrics.TargetRiskLevel switch
+        {
+            RiskLevel.Low => "success",
+            RiskLevel.Medium => "warning",
+            RiskLevel.High => "danger",
+            _ => "secondary"
+        };
+    }
+
+    /// <summary>
+    /// Gets the badge class for recommendation priority.
+    /// </summary>
+    /// <param name="priority">The recommendation priority level.</param>
+    /// <returns>The CSS class for the priority badge.</returns>
+    private string GetPriorityBadgeClass(int priority)
+    {
+        return priority switch
+        {
+            1 => "danger",
+            2 => "warning",
+            3 => "info",
+            _ => "secondary"
+        };
+    }
+
+    /// <summary>
+    /// Initializes the risk distribution chart after the first render.
+    /// </summary>
+    protected override void OnAfterRender(bool firstRender)
+    {
+        if (firstRender && Result != null)
+        {
+            InitializeRiskDistributionChart();
+        }
+    }
+
+    /// <summary>
+    /// Initializes the risk distribution chart with asset class distribution data.
+    /// </summary>
+    private void InitializeRiskDistributionChart()
+    {
+        var ctx = document.getElementById("riskDistributionChart").getContext("2d");
+        new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: ["Equities", "Bonds", "Cash"],
+                datasets: [{
+                    data: [
+                        Result.RiskMetrics.AssetClassDistribution["Equities"],
+                        Result.RiskMetrics.AssetClassDistribution["Bonds"],
+                        Result.RiskMetrics.AssetClassDistribution["Cash"]
+                    ],
+                    backgroundColor: [
+                        'rgba(255, 99, 132, 0.2)',
+                        'rgba(54, 162, 235, 0.2)',
+                        'rgba(75, 192, 192, 0.2)'
+                    ],
+                    borderColor: [
+                        'rgba(255, 99, 132, 1)',
+                        'rgba(54, 162, 235, 1)',
+                        'rgba(75, 192, 192, 1)'
+                    ],
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        position: 'top',
+                    },
+                    title: {
+                        display: true,
+                        text: 'Asset Class Distribution'
+                    }
+                }
+            }
+        });
+    }
+}

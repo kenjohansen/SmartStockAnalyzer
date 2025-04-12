@@ -1,0 +1,185 @@
+/*
+ * Copyright (c) 2025 Ken Johansen. All rights reserved.
+ * This file is part of Smart Portfolio Analyzer and is licensed under the MIT license.
+ * See the LICENSE file in the project root for more information.
+ */
+
+@page "/portfolio-management"
+@using SmartPortfolioAnalyzer.Core.Models
+@inject IPortfolioService PortfolioService
+
+<PageTitle>Portfolio Management</PageTitle>
+
+<div class="container-fluid">
+    <div class="row mt-4">
+        <div class="col-12">
+            <h1 class="display-4">Portfolio Management</h1>
+            <p class="lead">Manage your portfolio positions and allocations</p>
+        </div>
+    </div>
+
+    <!-- Portfolio Overview -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="card-title mb-0">Portfolio Overview</h5>
+                        <button class="btn btn-primary" @onclick="AddPosition">
+                            Add Position
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Symbol</th>
+                                    <th>Name</th>
+                                    <th>Current Value</th>
+                                    <th>Weight</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var position in Portfolio.Positions)
+                                {
+                                    <tr>
+                                        <td>@position.Symbol</td>
+                                        <td>@position.Name</td>
+                                        <td>$@position.CurrentValue:F2</td>
+                                        <td>@(position.Weight * 100:F1)%</td>
+                                        <td>
+                                            <button class="btn btn-sm btn-warning me-2" @onclick="() => EditPosition(position)">
+                                                Edit
+                                            </button>
+                                            <button class="btn btn-sm btn-danger" @onclick="() => RemovePosition(position)">
+                                                Remove
+                                            </button>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Position Details Modal -->
+    <div class="modal fade" id="positionModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">@ModalTitle</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Symbol</label>
+                        <input type="text" class="form-control" @bind="SelectedPosition.Symbol" />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Name</label>
+                        <input type="text" class="form-control" @bind="SelectedPosition.Name" />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Quantity</label>
+                        <input type="number" class="form-control" @bind="SelectedPosition.Quantity" />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Purchase Price</label>
+                        <input type="number" class="form-control" @bind="SelectedPosition.PurchasePrice" />
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" @onclick="SavePosition">Save</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    private Portfolio? Portfolio;
+    private PortfolioPosition SelectedPosition = new PortfolioPosition();
+    private bool IsEditing = false;
+    private string ModalTitle = "Add Position";
+
+    protected override async Task OnInitializedAsync()
+    {
+        Portfolio = await PortfolioService.GetPortfolioAsync();
+    }
+
+    private void AddPosition()
+    {
+        SelectedPosition = new PortfolioPosition();
+        ModalTitle = "Add Position";
+        IsEditing = false;
+        ShowModal();
+    }
+
+    private void EditPosition(PortfolioPosition position)
+    {
+        SelectedPosition = position;
+        ModalTitle = "Edit Position";
+        IsEditing = true;
+        ShowModal();
+    }
+
+    private void RemovePosition(PortfolioPosition position)
+    {
+        if (Portfolio != null && Portfolio.Positions.Contains(position))
+        {
+            Portfolio.Positions.Remove(position);
+            await PortfolioService.SavePortfolioAsync(Portfolio);
+        }
+    }
+
+    private async Task SavePosition()
+    {
+        if (Portfolio != null)
+        {
+            if (IsEditing)
+            {
+                // Update existing position
+                var index = Portfolio.Positions.IndexOf(SelectedPosition);
+                if (index >= 0)
+                {
+                    Portfolio.Positions[index] = SelectedPosition;
+                }
+            }
+            else
+            {
+                // Add new position
+                Portfolio.Positions.Add(SelectedPosition);
+            }
+
+            await PortfolioService.SavePortfolioAsync(Portfolio);
+            HideModal();
+        }
+    }
+
+    private void ShowModal()
+    {
+        var modal = document.getElementById("positionModal");
+        if (modal != null)
+        {
+            var bsModal = new bootstrap.Modal(modal);
+            bsModal.show();
+        }
+    }
+
+    private void HideModal()
+    {
+        var modal = document.getElementById("positionModal");
+        if (modal != null)
+        {
+            var bsModal = bootstrap.Modal.getInstance(modal);
+            bsModal.hide();
+        }
+    }
+}

@@ -1,0 +1,176 @@
+/*
+ * Copyright (c) 2025 Ken Johansen. All rights reserved.
+ * This file is part of Smart Portfolio Analyzer and is licensed under the MIT license.
+ * See the LICENSE file in the project root for more information.
+ */
+
+@page "/portfolio"
+@using SmartPortfolioAnalyzer.Core.Models
+@using SmartPortfolioAnalyzer.Web.Components
+@inject IPortfolioService PortfolioService
+@inject IAnalysisService AnalysisService
+@inject NavigationManager Navigation
+
+<PageTitle>Portfolio Dashboard</PageTitle>
+
+<!-- Main container for the portfolio dashboard -->
+<div class="container-fluid">
+    <!-- Dashboard header -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <h1 class="display-4">Portfolio Dashboard</h1>
+            <p class="lead">Monitor and manage your investment portfolio</p>
+        </div>
+    </div>
+
+    <!-- Portfolio overview and performance -->
+    <div class="row mt-4">
+        <div class="col-md-3">
+            <!-- Portfolio card component -->
+            <PortfolioCard @bind-Portfolio="SelectedPortfolio" @bind-IsLoading="IsLoading" />
+        </div>
+
+        <div class="col-md-9">
+            <!-- Performance chart component -->
+            <PortfolioChart Portfolio="SelectedPortfolio" />
+        </div>
+    </div>
+
+    <!-- Analysis controls section -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Portfolio Analysis</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <!-- Risk analysis button -->
+                        <div class="col-md-3">
+                            <button class="btn btn-primary w-100" @onclick="RunRiskAnalysis">
+                                Risk Analysis
+                            </button>
+                        </div>
+                        <!-- Diversification analysis button -->
+                        <div class="col-md-3">
+                            <button class="btn btn-success w-100" @onclick="RunDiversificationAnalysis">
+                                Diversification Analysis
+                            </button>
+                        </div>
+                        <!-- Tax analysis button -->
+                        <div class="col-md-3">
+                            <button class="btn btn-info w-100" @onclick="RunTaxAnalysis">
+                                Tax Analysis
+                            </button>
+                        </div>
+                        <!-- Transaction cost analysis button -->
+                        <div class="col-md-3">
+                            <button class="btn btn-warning w-100" @onclick="RunTransactionAnalysis">
+                                Transaction Cost Analysis
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Analysis results section -->
+    <div class="row mt-4" @bind-visible="ShowAnalysisResults">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">@AnalysisTitle</h5>
+                </div>
+                <div class="card-body">
+                    <!-- Dynamic analysis results based on selected analysis type -->
+                    @if (AnalysisResults != null)
+                    {
+                        @if (AnalysisResults is RiskOptimizationResult riskResult)
+                        {
+                            <RiskAnalysisResults Result="riskResult" />
+                        }
+                        else if (AnalysisResults is DiversificationAnalysisResult diversificationResult)
+                        {
+                            <DiversificationAnalysisResults Result="diversificationResult" />
+                        }
+                        else if (AnalysisResults is TaxOptimizationResult taxResult)
+                        {
+                            <TaxAnalysisResults Result="taxResult" />
+                        }
+                        else if (AnalysisResults is TransactionCostOptimizationResult transactionResult)
+                        {
+                            <TransactionAnalysisResults Result="transactionResult" />
+                        }
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    private Portfolio? SelectedPortfolio;
+    private bool IsLoading;
+    private bool ShowAnalysisResults;
+    private string AnalysisTitle = "";
+    private object? AnalysisResults;
+
+    /// <summary>
+    /// Initializes the component by loading the portfolio data.
+    /// </summary>
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadPortfolioAsync();
+    }
+
+    /// <summary>
+    /// Loads the portfolio data from the service.
+    /// </summary>
+    private async Task LoadPortfolioAsync()
+    {
+        IsLoading = true;
+        SelectedPortfolio = await PortfolioService.GetPortfolioAsync();
+        IsLoading = false;
+    }
+
+    /// <summary>
+    /// Runs the risk analysis on the current portfolio.
+    /// </summary>
+    private async Task RunRiskAnalysis()
+    {
+        AnalysisTitle = "Risk Analysis Results";
+        ShowAnalysisResults = true;
+        AnalysisResults = await AnalysisService.RunRiskAnalysisAsync(SelectedPortfolio!);
+    }
+
+    /// <summary>
+    /// Runs the diversification analysis on the current portfolio.
+    /// </summary>
+    private async Task RunDiversificationAnalysis()
+    {
+        AnalysisTitle = "Diversification Analysis Results";
+        ShowAnalysisResults = true;
+        AnalysisResults = await AnalysisService.RunDiversificationAnalysisAsync(SelectedPortfolio!);
+    }
+
+    /// <summary>
+    /// Runs the tax analysis on the current portfolio.
+    /// </summary>
+    private async Task RunTaxAnalysis()
+    {
+        AnalysisTitle = "Tax Analysis Results";
+        ShowAnalysisResults = true;
+        AnalysisResults = await AnalysisService.RunTaxAnalysisAsync(SelectedPortfolio!);
+    }
+
+    /// <summary>
+    /// Runs the transaction cost analysis on the current portfolio.
+    /// </summary>
+    private async Task RunTransactionAnalysis()
+    {
+        AnalysisTitle = "Transaction Cost Analysis Results";
+        ShowAnalysisResults = true;
+        AnalysisResults = await AnalysisService.RunTransactionCostAnalysisAsync(SelectedPortfolio!);
+    }
+}

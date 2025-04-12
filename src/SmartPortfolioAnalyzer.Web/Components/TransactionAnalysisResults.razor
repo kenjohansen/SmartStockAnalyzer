@@ -1,0 +1,178 @@
+/*
+ * Copyright (c) 2025 Ken Johansen. All rights reserved.
+ * This file is part of Smart Portfolio Analyzer and is licensed under the MIT license.
+ * See the LICENSE file in the project root for more information.
+ */
+
+@using SmartPortfolioAnalyzer.Core.Models
+@using SmartPortfolioAnalyzer.Services.Analysis.Models
+
+<div class="container-fluid">
+    @if (Result != null)
+    {
+        <div class="row">
+            <!-- Cost Metrics Card -->
+            <div class="col-md-4">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">Transaction Cost Metrics</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="list-group">
+                            <!-- Total Transaction Costs -->
+                            <div class="list-group-item">
+                                <div class="d-flex w-100 justify-content-between">
+                                    <h6 class="mb-1">Total Transaction Costs</h6>
+                                    <span>$@Result.CostMetrics.TotalCost:F2</span>
+                                </div>
+                            </div>
+                            <!-- Transaction Costs -->
+                            <div class="list-group-item">
+                                <div class="d-flex w-100 justify-content-between">
+                                    <h6 class="mb-1">Transaction Costs</h6>
+                                    <span>$@Result.CostMetrics.TransactionCosts:F2</span>
+                                </div>
+                            </div>
+                            <!-- Slippage Costs -->
+                            <div class="list-group-item">
+                                <div class="d-flex w-100 justify-content-between">
+                                    <h6 class="mb-1">Slippage Costs</h6>
+                                    <span>$@Result.CostMetrics.SlippageCosts:F2</span>
+                                </div>
+                            </div>
+                            <!-- Market Impact Costs -->
+                            <div class="list-group-item">
+                                <div class="d-flex w-100 justify-content-between">
+                                    <h6 class="mb-1">Market Impact Costs</h6>
+                                    <span>$@Result.CostMetrics.MarketImpactCosts:F2</span>
+                                </div>
+                            </div>
+                            <!-- Cost Efficiency Score -->
+                            <div class="list-group-item">
+                                <div class="d-flex w-100 justify-content-between">
+                                    <h6 class="mb-1">Cost Efficiency Score</h6>
+                                    <span>@(Result.CostMetrics.CostEfficiencyScore * 100:F1)%</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Cost Breakdown Chart -->
+            <div class="col-md-8">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">Cost Breakdown</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="chart-container">
+                            <canvas id="costBreakdownChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Optimization Plan Section -->
+            <div class="col-12 mt-4">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">Optimization Plan</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table">
+                                <thead>
+                                    <tr>
+                                        <th>Asset Class</th>
+                                        <th>Current Weight</th>
+                                        <th>Target Weight</th>
+                                        <th>Change</th>
+                                        <th>Cost Impact</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var action in Result.OptimizationPlan.Actions)
+                                    {
+                                        <tr>
+                                            <td>@action.AssetClass</td>
+                                            <td>@(action.CurrentWeight * 100:F1)%</td>
+                                            <td>@(action.TargetWeight * 100:F1)%</td>
+                                            <td class="@(action.WeightDifference > 0 ? "text-success" : "text-danger")">
+                                                @(action.WeightDifference * 100:F1)%
+                                            </td>
+                                            <td>@(action.CostImpact:F2)</td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    /// <summary>
+    /// Component for displaying transaction cost analysis results.
+    /// </summary>
+    [Parameter]
+    public TransactionCostOptimizationResult? Result { get; set; }
+
+    /// <summary>
+    /// Initializes the cost breakdown chart after the first render.
+    /// </summary>
+    protected override void OnAfterRender(bool firstRender)
+    {
+        if (firstRender && Result != null)
+        {
+            InitializeCostBreakdownChart();
+        }
+    }
+
+    /// <summary>
+    /// Initializes the cost breakdown chart with cost distribution data.
+    /// </summary>
+    private void InitializeCostBreakdownChart()
+    {
+        var ctx = document.getElementById("costBreakdownChart").getContext("2d");
+        new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: ["Transaction Costs", "Slippage Costs", "Market Impact Costs"],
+                datasets: [{
+                    data: [
+                        Result.CostMetrics.TransactionCosts,
+                        Result.CostMetrics.SlippageCosts,
+                        Result.CostMetrics.MarketImpactCosts
+                    ],
+                    backgroundColor: [
+                        'rgba(54, 162, 235, 0.2)',
+                        'rgba(75, 192, 192, 0.2)',
+                        'rgba(153, 102, 255, 0.2)'
+                    ],
+                    borderColor: [
+                        'rgba(54, 162, 235, 1)',
+                        'rgba(75, 192, 192, 1)',
+                        'rgba(153, 102, 255, 1)'
+                    ],
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        position: 'top',
+                    },
+                    title: {
+                        display: true,
+                        text: 'Transaction Cost Breakdown'
+                    }
+                }
+            }
+        });
+    }
+}
