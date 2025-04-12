@@ -1,0 +1,104 @@
+/*
+ * Copyright (c) 2025 Ken Johansen. All rights reserved.
+ * This file is part of Smart Portfolio Analyzer and is licensed under the MIT license.
+ * See the LICENSE file in the project root for more information.
+ */
+
+@inherits MudExComponentBase
+@using MudBlazor
+@using SmartPortfolioAnalyzer.Web.Services
+@inject ISignalRService SignalRService
+@inject IChartService ChartService
+
+<MudContainer MaxWidth="MaxWidth.Large" Class="py-4">
+    <MudGrid>
+        <MudItem xs="12">
+            <PortfolioCard Title="Portfolio Overview" Icon="dashboard">
+                <Body>
+                    <MudGrid>
+                        <MudItem xs="12" md="6">
+                            <PortfolioChart @bind-Value="PortfolioValue" />
+                        </MudItem>
+                        <MudItem xs="12" md="6">
+                            <RiskMetricsChart @bind-Value="RiskMetrics" />
+                        </MudItem>
+                    </MudGrid>
+                </Body>
+                <Actions>
+                    <MudButton OnClick="RefreshData" Variant="Variant.Filled" Color="Color.Primary">
+                        <MudIcon Icon="refresh" /> Refresh
+                    </MudButton>
+                </Actions>
+            </PortfolioCard>
+        </MudItem>
+    </MudGrid>
+</MudContainer>
+
+@code {
+    /// <summary>
+    /// Component for displaying the portfolio dashboard
+    /// </summary>
+    /// <remarks>
+    /// This component provides a comprehensive dashboard view of portfolio metrics,
+    /// including performance charts, risk metrics, and position distribution.
+    /// </remarks>
+    public partial class PortfolioDashboard
+    {
+        /// <summary>
+        /// Gets or sets the portfolio value
+        /// </summary>
+        private decimal PortfolioValue { get; set; } = 0;
+
+        /// <summary>
+        /// Gets or sets the risk metrics
+        /// </summary>
+        private RiskMetrics RiskMetrics { get; set; } = new();
+
+        protected override async Task OnInitializedAsync()
+        {
+            await base.OnInitializedAsync();
+            await SignalRService.ConnectAsync();
+            SignalRService.OnPortfolioUpdate += HandlePortfolioUpdate;
+            SignalRService.OnRiskMetricsUpdate += HandleRiskMetricsUpdate;
+        }
+
+        private void HandlePortfolioUpdate(object sender, string e)
+        {
+            var data = System.Text.Json.JsonSerializer.Deserialize<PortfolioUpdate>(e);
+            PortfolioValue = data.Value;
+            StateHasChanged();
+        }
+
+        private void HandleRiskMetricsUpdate(object sender, string e)
+        {
+            var data = System.Text.Json.JsonSerializer.Deserialize<RiskMetrics>(e);
+            RiskMetrics = data;
+            StateHasChanged();
+        }
+
+        private async Task RefreshData()
+        {
+            // TODO: Implement refresh logic
+        }
+
+        public class PortfolioUpdate
+        {
+            public string PortfolioId { get; set; } = string.Empty;
+            public decimal Value { get; set; }
+        }
+
+        public class RiskMetrics
+        {
+            public decimal Volatility { get; set; }
+            public decimal SharpeRatio { get; set; }
+            public decimal MaxDrawdown { get; set; }
+        }
+
+        protected override void OnDispose()
+        {
+            SignalRService.OnPortfolioUpdate -= HandlePortfolioUpdate;
+            SignalRService.OnRiskMetricsUpdate -= HandleRiskMetricsUpdate;
+            base.OnDispose();
+        }
+    }
+}

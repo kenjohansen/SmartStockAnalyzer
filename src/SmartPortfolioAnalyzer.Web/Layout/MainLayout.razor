@@ -1,16 +1,48 @@
-﻿@inherits LayoutComponentBase
-<div class="page">
-    <div class="sidebar">
-        <NavMenu />
-    </div>
+/*
+ * Copyright (c) 2025 Ken Johansen. All rights reserved.
+ * This file is part of Smart Portfolio Analyzer and is licensed under the MIT license.
+ * See the LICENSE file in the project root for more information.
+ */
 
-    <main>
-        <div class="top-row px-4">
-            <a href="https://learn.microsoft.com/aspnet/core/" target="_blank">About</a>
-        </div>
+@inherits LayoutComponentBase
+@using MudBlazor
 
-        <article class="content px-4">
+<MudThemeProvider/>
+<MudDialogProvider/>
+<MudSnackbarProvider/>
+
+<MudLayout>
+    <MudAppBar Elevation="1">
+        <MudIconButton Icon="menu" Color="Color.Inherit" Edge="Edge.Start" OnClick="@((e) => DrawerToggle())" />
+        <MudText Typo="Typo.h6">Smart Portfolio Advisor</MudText>
+        <MudSpacer/>
+        <MudIconButton Icon="notifications" Color="Color.Inherit" />
+        <MudIconButton Icon="account_circle" Color="Color.Inherit" />
+    </MudAppBar>
+
+    <MudDrawer @bind-Open="drawerOpen" ClipMode="DrawerClipMode.Always" Elevation="0">
+        <NavigationMenu />
+    </MudDrawer>
+
+    <MudMainContent>
+        <MudContainer MaxWidth="MaxWidth.Large" Class="py-4">
             @Body
-        </article>
-    </main>
-</div>
+        </MudContainer>
+    </MudMainContent>
+</MudLayout>
+
+@code {
+    /// <summary>
+    /// Main layout component for the Smart Portfolio Analyzer application
+    /// </summary>
+    /// <remarks>
+    /// This component provides the main layout structure for the application,
+    /// including header, navigation, and content areas.
+    /// </remarks>
+    private bool drawerOpen = true;
+
+    private void DrawerToggle()
+    {
+        drawerOpen = !drawerOpen;
+    }
+}

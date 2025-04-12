@@ -1,0 +1,69 @@
+/*
+ * Copyright (c) 2025 Ken Johansen. All rights reserved.
+ * This file is part of Smart Portfolio Analyzer and is licensed under the MIT license.
+ * See the LICENSE file in the project root for more information.
+ */
+
+@inherits MudExComponentBase
+@using MudBlazor
+
+<MudDrawer @bind-Open="IsDrawerOpen" Elevation="0" ClipMode="DrawerClipMode.Always" Anchor="Anchor.Left" Class="drawer">
+    <MudNavMenu>
+        <MudText Typo="Typo.h6" Align="Align.Center" Color="Color.Primary" Class="my-3">
+            Smart Portfolio
+        </MudText>
+        
+        <MudDivider Class="my-3" />
+
+        <MudText Typo="Typo.subtitle1" Color="Color.Secondary" Class="ml-3 mb-2">
+            Portfolio
+        </MudText>
+        <MudNavLink Href="portfolio/dashboard" Match="NavLinkMatch.Prefix" Icon="dashboard">
+            Dashboard
+        </MudNavLink>
+        <MudNavLink Href="portfolio/create" Match="NavLinkMatch.Prefix" Icon="add">
+            Create Portfolio
+        </MudNavLink>
+        <MudNavLink Href="portfolio/list" Match="NavLinkMatch.Prefix" Icon="folder_open">
+            My Portfolios
+        </MudNavLink>
+
+        <MudText Typo="Typo.subtitle1" Color="Color.Secondary" Class="ml-3 mb-2 mt-4">
+            Analysis
+        </MudText>
+        <MudNavLink Href="analysis/overview" Match="NavLinkMatch.Prefix" Icon="analytics">
+            Risk Analysis
+        </MudNavLink>
+        <MudNavLink Href="analysis/performance" Match="NavLinkMatch.Prefix" Icon="trending_up">
+            Performance
+        </MudNavLink>
+        <MudNavLink Href="analysis/optimization" Match="NavLinkMatch.Prefix" Icon="tune">
+            Optimization
+        </MudNavLink>
+
+        <MudText Typo="Typo.subtitle1" Color="Color.Secondary" Class="ml-3 mb-2 mt-4">
+            Settings
+        </MudText>
+        <MudNavLink Href="settings/preferences" Match="NavLinkMatch.Prefix" Icon="settings">
+            Preferences
+        </MudNavLink>
+        <MudNavLink Href="settings/security" Match="NavLinkMatch.Prefix" Icon="security">
+            Security
+        </MudNavLink>
+    </MudNavMenu>
+</MudDrawer>
+
+@code {
+    /// <summary>
+    /// Navigation menu component for the Smart Portfolio Analyzer application
+    /// </summary>
+    /// <remarks>
+    /// This component provides a sidebar navigation menu with links to all major sections
+    /// of the portfolio management application, including portfolio management, analysis,
+    /// and settings.
+    /// </remarks>
+    public partial class NavigationMenu
+    {
+        private bool IsDrawerOpen = true;
+    }
+}

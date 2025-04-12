@@ -1,0 +1,73 @@
+/*
+ * Copyright (c) 2025 Ken Johansen. All rights reserved.
+ * This file is part of Smart Portfolio Analyzer and is licensed under the MIT license.
+ * See the LICENSE file in the project root for more information.
+ */
+
+@page "/portfolio/chart"
+@using Microsoft.JSInterop
+@inject IJSRuntime JSRuntime
+
+/// <summary>
+/// Component for displaying portfolio charts
+/// </summary>
+/// <remarks>
+/// This component renders a Chart.js chart for portfolio visualization,
+/// including performance, risk metrics, and position distribution.
+/// </remarks>
+<div class="chart-container">
+    <canvas id="portfolioChart"></canvas>
+</div>
+
+@code {
+    private DotNetObjectReference<PortfolioChart>? objRef;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            objRef = DotNetObjectReference.Create(this);
+            await JSRuntime.InvokeVoidAsync(
+                "portfolioChart.initialize",
+                "portfolioChart",
+                objRef
+            );
+        }
+    }
+
+    /// <summary>
+    /// Updates the chart with new data
+    /// </summary>
+    /// <param name="data">The new chart data</param>
+    [JSInvokable]
+    public void UpdateChart(string data)
+    {
+        // Parse the data and update the chart
+        var chartData = System.Text.Json.JsonSerializer.Deserialize<PortfolioChartData>(data);
+        StateHasChanged();
+    }
+
+    /// <summary>
+    /// Represents the data for a portfolio chart
+    /// </summary>
+    public class PortfolioChartData
+    {
+        /// <summary>
+        /// Gets or sets the chart labels
+        /// </summary>
+        public List<string> Labels { get; set; } = new();
+
+        /// <summary>
+        /// Gets or sets the chart values
+        /// </summary>
+        public List<decimal> Values { get; set; } = new();
+    }
+
+    /// <summary>
+    /// Disposes of the component resources
+    /// </summary>
+    public void Dispose()
+    {
+        objRef?.Dispose();
+    }
+}
